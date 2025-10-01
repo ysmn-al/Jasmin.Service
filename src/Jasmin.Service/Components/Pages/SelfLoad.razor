@@ -1,0 +1,718 @@
+﻿@page "/selfLoad"
+@using Jasmin.Service.Components.Layout
+@using Jasmin.Service.Components.Modals
+@using Jasmin.Service.Services
+@inject NavigationManager Navigation
+@attribute [StreamRendering]
+@inject AuthenticationStateProviderService AuthenticationStateProviderService
+@inject IApplicationService applicationService
+@using System.Linq.Dynamic.Core
+@using System.Security.Claims
+@using Radzen
+@using Jasmin.Common.Dto.Output
+@using System.Collections.ObjectModel
+
+<div class="dropdown">
+    <button @onclick="ToggleDropdownYear" class="btn btn-secondary dropdown-toggle" type="button">
+        Выберите год
+    </button>
+    <div class="dropdown-menu @(isOpenYear ? "show" : "")">
+        @foreach (var year in uniqueYears)
+        {
+            <a class="dropdown-item" @onclick="() => SelectYear(year.AcademicYear, year.Id)">
+                @year.AcademicYear
+            </a>
+        }
+    </div>
+
+    <button @onclick="ToggleDropdownSemester" class="btn btn-secondary dropdown-toggle" type="button">
+        Выберите семестр
+    </button>
+    <div class="dropdown-menu @(isOpenSemester ? "show" : "")">
+        <a class="dropdown-item" @onclick="() => SelectSemester(autumnSemester)">Осенний семестр</a>
+        <a class="dropdown-item" @onclick="() => SelectSemester(springSemester)">Весенний семестр</a>
+    </div>
+
+    <button @onclick="ToggleDropdownSubj" class="btn btn-secondary dropdown-toggle" type="button">
+        Выберите предмет
+    </button>
+    <div class="dropdown-menu @(isOpenSubj ? "show" : "")">
+        <div class="dropdown-header">
+            <span> </span>
+            <span @onclick="() => isOpenSubj = false" class="close-icon" aria-label="Close">
+                &times;
+            </span>
+        </div>
+        @foreach (var subject in uniqueSubjectNames)
+        {
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="@subject.Name" @onchange="(e) => OnSubjectSelected(subject.Name, subject.Id, e.Value)" />
+                <label class="form-check-label" for="@subject.Name">@subject.Name</label>
+            </div>
+        }
+    </div>
+
+    <button @onclick="ToggleDropdownFaculty" class="btn btn-secondary dropdown-toggle" type="button">
+        Выберите институт
+    </button>
+    <div class="dropdown-menu @(isOpenFaculty ? "show" : "")">
+        <div class="dropdown-header">
+            <span> </span>
+            <span @onclick="() => isOpenFaculty = false" class="close-icon" aria-label="Close">
+                &times;
+            </span>
+        </div>
+
+        <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="selectAllFaculties" @bind="@selectAllFaculties" />
+            <label class="form-check-label" for="selectAllFaculties">Выбрать все</label>
+        </div>
+
+        @foreach (var faculty in uniqueFaculties)
+        {
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="@faculty" @onchange="(e) => SelectFaculty(faculty)" checked="@selectedFaculties.Contains(faculty)" />
+                <label class="form-check-label" for="@faculty">@faculty</label>
+            </div>
+        }
+    </div>
+</div>
+<div class="selected-items">
+    @if (selectedYear != null || selectedSubjects.Any() || selectedFaculties.Any())
+    {
+        <p>
+            <strong>Выбранные элементы, по которым будет совершен поиск:</strong><br />
+            @if (selectedYear != null)
+            {
+                <span>Академический год: @selectedYear</span>
+                <br />
+            }
+            @if (selectedSemester != null)
+            {
+                <span>Семестр: @selectedSemester</span>
+                <br />
+            }
+            @if (selectedSubjects.Any())
+            {
+                <span>Предметы: @string.Join(", ", selectedSubjects)</span>
+                <br />
+            }
+            @if (selectAllFaculties) // Проверяем, выбраны ли все факультеты
+            {
+                <span>Факультеты: Все факультеты выбраны</span>
+                <br />
+            }
+            else if (selectedFaculties.Any()) // Если не все, но есть выбранные факультеты
+            {
+                <span>Факультеты: @string.Join(", ", selectedFaculties)</span>
+                <br />
+            }
+        </p>
+    }
+</div>
+
+
+<button @onclick="LoadPlannedLoads" class="btn btn-primary mt-3">Загрузить данные</button>
+@if (plannedLoads != null && plannedLoads.Any())
+{
+    <h3>Выбранные записи</h3>
+    @if (selectedPlannedLoads != null && selectedPlannedLoads.Any())
+    {
+        <RadzenDataGrid Data="@selectedPlannedLoads" TItem="PlannedLoadDto" Striped="true">
+            <Columns>
+                <RadzenDataGridColumn TItem="PlannedLoadDto" Property="SubjectName" Title="Предмет" />
+                <RadzenDataGridColumn TItem="PlannedLoadDto" Property="UnitName" Title="Группа" Width="120px" />
+                <RadzenDataGridColumn TItem="PlannedLoadDto" Property="Lecture" Title="Л" Width="60px">
+                    <Template>
+                        @if (@context.Lecture == 0)
+                        {
+                            <span>-</span>
+                        }
+                        else
+                        {
+                            <span>@context.Lecture</span>
+                        }
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="PlannedLoadDto" Property="Lesson" Title="ПЗ" Width="60px">
+                    <Template>
+                        @if (@context.Lesson == 0)
+                        {
+                            <span>-</span>
+                        }
+                        else
+                        {
+                            <span>@context.Lesson</span>
+                        }
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="PlannedLoadDto" Property="Labwork" Title="ЛР" Width="60px">
+                    <Template>
+                        @if (@context.Labwork == 0)
+                        {
+                            <span>-</span>
+                        }
+                        else
+                        {
+                            <span>@context.Labwork</span>
+                        }
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="PlannedLoadDto" Property="Coursework" Title="КР" Width="60px">
+                    <Template>
+                        @if (@context.Coursework == 0)
+                        {
+                            <span>-</span>
+                        }
+                        else
+                        {
+                            <span>@context.Coursework</span>
+                        }
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="PlannedLoadDto" Property="CourseProject" Title="КП" Width="60px">
+                    <Template>
+                        @if (@context.CourseProject == 0)
+                        {
+                            <span>-</span>
+                        }
+                        else
+                        {
+                            <span>@context.CourseProject</span>
+                        }
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="PlannedLoadDto" Property="Сonsultation" Title="Консультация" Width="100px">
+                    <Template>
+                        @if (@context.Сonsultation == 0)
+                        {
+                            <span>-</span>
+                        }
+                        else
+                        {
+                            <span>@context.Сonsultation</span>
+                        }
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="PlannedLoadDto" Property="Exam" Title="Э" Width="60px">
+                    <Template>
+                        @if (@context.Exam == 0)
+                        {
+                            <span>-</span>
+                        }
+                        else
+                        {
+                            <span>@context.Exam</span>
+                        }
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="PlannedLoadDto" Property="Rating" Title="Р" Width="60px">
+                    <Template>
+                        @if (@context.Rating == 0)
+                        {
+                            <span>-</span>
+                        }
+                        else
+                        {
+                            <span>@context.Rating</span>
+                        }
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="PlannedLoadDto" Property="Credit" Title="З" Width="60px">
+                    <Template>
+                        @if (@context.Credit == 0)
+                        {
+                            <span>-</span>
+                        }
+                        else
+                        {
+                            <span>@context.Credit</span>
+                        }
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="PlannedLoadDto" Property="Practice" Title="Практика" Width="60px">
+                    <Template>
+                        @if (@context.Practice == 0)
+                        {
+                            <span>-</span>
+                        }
+                        else
+                        {
+                            <span>@context.Practice</span>
+                        }
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="PlannedLoadDto" Title="" Width="90px">
+                    <Template>
+                        <button @onclick="() => ShowEditModal(context)">?</button>
+                        <button @onclick="() => RemoveFromSelected(context)">-</button>
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+
+        <button @onclick="CalculateTotal" class="btn btn-secondary mt-3">Посчитать</button>
+
+        @if (totalSum.HasValue)
+        {
+            <div>
+                <strong>Общая сумма:</strong> @totalSum.Value
+            </div>
+        }
+    }
+    else
+    {
+        <p>Нет выбранных записей.</p>
+    }
+
+    <h3>Загруженные данные</h3>
+    <RadzenDataGrid Data="@plannedLoads" TItem="PlannedLoadDto" Striped="true">
+        <Columns>
+            <RadzenDataGridColumn TItem="PlannedLoadDto" Property="SubjectName" Title="Предмет" />
+            <RadzenDataGridColumn TItem="PlannedLoadDto" Property="UnitName" Title="Группа" Width="120px" />
+            <RadzenDataGridColumn TItem="PlannedLoadDto" Property="Lecture" Title="Л" Width="60px">
+                <Template>
+                    @if (@context.Lecture == 0)
+                    {
+                        <span>-</span>
+                    }
+                    else
+                    {
+                        <span>@context.Lecture</span>
+                    }
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="PlannedLoadDto" Property="Lesson" Title="ПЗ" Width="60px">
+                <Template>
+                    @if (@context.Lesson == 0)
+                    {
+                        <span>-</span>
+                    }
+                    else
+                    {
+                        <span>@context.Lesson</span>
+                    }
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="PlannedLoadDto" Property="Labwork" Title="ЛР" Width="60px">
+                <Template>
+                    @if (@context.Labwork == 0)
+                    {
+                        <span>-</span>
+                    }
+                    else
+                    {
+                        <span>@context.Labwork</span>
+                    }
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="PlannedLoadDto" Property="Coursework" Title="КР" Width="60px">
+                <Template>
+                    @if (@context.Coursework == 0)
+                    {
+                        <span>-</span>
+                    }
+                    else
+                    {
+                        <span>@context.Coursework</span>
+                    }
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="PlannedLoadDto" Property="CourseProject" Title="КП" Width="60px">
+                <Template>
+                    @if (@context.CourseProject == 0)
+                    {
+                        <span>-</span>
+                    }
+                    else
+                    {
+                        <span>@context.CourseProject</span>
+                    }
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="PlannedLoadDto" Property="Сonsultation" Title="Консультация" Width="100px">
+                <Template>
+                    @if (@context.Сonsultation == 0)
+                    {
+                        <span>-</span>
+                    }
+                    else
+                    {
+                        <span>@context.Сonsultation</span>
+                    }
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="PlannedLoadDto" Property="Exam" Title="Э" Width="60px">
+                <Template>
+                    @if (@context.Exam == 0)
+                    {
+                        <span>-</span>
+                    }
+                    else
+                    {
+                        <span>@context.Exam</span>
+                    }
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="PlannedLoadDto" Property="Rating" Title="Р" Width="60px">
+                <Template>
+                    @if (@context.Rating == 0)
+                    {
+                        <span>-</span>
+                    }
+                    else
+                    {
+                        <span>@context.Rating</span>
+                    }
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="PlannedLoadDto" Property="Credit" Title="З" Width="60px">
+                <Template>
+                    @if (@context.Credit == 0)
+                    {
+                        <span>-</span>
+                    }
+                    else
+                    {
+                        <span>@context.Credit</span>
+                    }
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="PlannedLoadDto" Property="Practice" Title="Практика" Width="60px">
+                <Template>
+                    @if (@context.Practice == 0)
+                    {
+                        <span>-</span>
+                    }
+                    else
+                    {
+                        <span>@context.Practice</span>
+                    }
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="PlannedLoadDto" Title="" Width="90px">
+                <Template>
+                    <button @onclick="() => AddToSelected(context)">+</button>
+                </Template>
+            </RadzenDataGridColumn>
+        </Columns>
+    </RadzenDataGrid>
+}
+
+@if (isModalVisible)
+{
+    <div class="modal">
+        <div class="modal-backdrop">
+            <EditModal PlannedLoad="selectedLoad" OnSave="HandleSave" OnCancel="CloseModal" IsVisible="isModalVisible" />
+        </div>
+    </div>
+}
+
+<style>
+    .dropdown {
+        position: relative;
+    }
+
+    .dropdown-menu {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        z-index: 1040; /* Убедитесь, что это значение ниже, чем у модального окна */
+        background-color: white;
+        border: 1px solid #ccc;
+        padding-top: 0.125rem;
+    }
+
+        .dropdown-menu.show {
+            display: block;
+        }
+
+    .selected-items {
+        margin-top: 10px;
+    }
+
+    .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: flex; /* Используем flexbox для центрирования */
+        justify-content: center; /* Центрируем по горизонтали */
+        align-items: center; /* Центрируем по вертикали */
+        z-index: 1050; /* Убедитесь, что это значение выше, чем у фона */
+    }
+
+    .modal-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5); /* Полупрозрачный черный фон */
+        z-index: 1040; /* Убедитесь, что это значение ниже, чем у модального окна */
+    }
+
+    .dropdown-header {
+        display: flex;
+        justify-content: space-between; /* Размещает элементы по краям */
+        align-items: center; /* Центрирует элементы по вертикали */
+        padding: 0.125rem 0.5rem 0.125rem 0.125rem;
+    }
+
+    .close-icon {
+        cursor: pointer;
+        font-size: 1.5rem; /* Размер шрифта для крестика */
+        color: #000; /* Цвет крестика */
+    }
+
+        .close-icon:hover {
+            color: red; /* Цвет при наведении */
+        }
+</style>
+
+@code {
+    private bool isOpenYear = false;
+    private bool isOpenSemester = false;
+    private bool isOpenSubj = false;
+    private List<SubjectDto> subjects = new List<SubjectDto>();
+    private List<YearDto> years = new List<YearDto>();
+    private List<(string Name, long Id)> uniqueSubjectNames = new List<(string Name, long Id)>();
+    private List<(string AcademicYear, long Id)> uniqueYears = new List<(string AcademicYear, long Id)>();
+    private ClaimsPrincipal currentUser;
+    private HashSet<string> selectedSubjects = new HashSet<string>(); // Для хранения выбранных предметов
+    private string selectedYear; // Переменная для хранения выбранного года
+    private string selectedSemester; // Переменная для хранения выбранного семестра
+    private string autumnSemester = "Осенний семестр";
+    private string springSemester = "Весенний семестр";
+    private long selectedYearId = 0; // Инициализируем значением по умолчанию
+    private int selectedSemesterId = 0; // Инициализируем значением по умолчанию
+    private List<long> selectedSubjectIds = new List<long>(); // Список для хранения ID всех выбранных предметов
+    private List<PlannedLoadDto> plannedLoads = new List<PlannedLoadDto>();
+    private PlannedLoadDto selectedLoad;
+    private bool isModalVisible = false;
+    private ObservableCollection<PlannedLoadDto> selectedPlannedLoads = new ObservableCollection<PlannedLoadDto>();
+    private long? totalSum;
+    private List<UnitDto> units; // Список всех единиц
+    private List<string> uniqueFaculties = new List<string>(); // Список уникальных факультетов
+    private bool isOpenFaculty = false; // Состояние дропдауна для факультетов
+    private HashSet<string> selectedFaculties = new HashSet<string>();
+    private bool selectAllFaculties; // Переменная для отслеживания состояния "Выбрать все факультеты"
+
+    protected override async Task OnInitializedAsync()
+    {
+        subjects = await applicationService.GetSubjects();
+        years = await applicationService.GetYears();
+        // Извлечение уникальных предметов с их ID
+        uniqueSubjectNames = subjects.Select(s => (Name: s.Name, Id: s.Id)).Distinct().ToList();
+
+        // Извлечение уникальных годов с их ID
+        uniqueYears = years.Select(s => (AcademicYear: s.AcademicYear, Id: s.Id)).Distinct().ToList();
+
+        // Получите данные (например, из API)
+        units = await applicationService.GetUnits();
+
+        if (units != null)
+        {
+            uniqueFaculties = units.Select(u => u.Faculty).Distinct().ToList();
+        }
+
+        var authState = await AuthenticationStateProviderService.GetAuthenticationStateAsync();
+        currentUser = authState.User;
+
+        if (!currentUser.Identity.IsAuthenticated)
+        {
+            Navigation.NavigateTo("/login");
+        }
+    }
+
+    private void CalculateTotal()
+    {
+        // Считаем общую сумму по выбранным записям
+        totalSum = selectedPlannedLoads.Sum(x => x.Lecture + x.Lesson + x.Practice + x.Labwork + x.Coursework + x.CourseProject + x.Сonsultation + x.Rating + x.Credit + x.Exam);
+    }
+
+    private void OnSelectAllFaculties()
+    {
+        if (selectAllFaculties)
+        {
+            selectedFaculties.UnionWith(uniqueFaculties);
+        }
+        else
+        {
+            selectedFaculties.Clear();
+        }
+    }
+
+    private void SelectFaculty(string faculty)
+    {
+        if (selectedFaculties.Contains(faculty))
+        {
+            selectedFaculties.Remove(faculty);
+        }
+        else
+        {
+            selectedFaculties.Add(faculty);
+        }
+
+        // Обновляем состояние чекбокса "Выбрать все факультеты"
+        selectAllFaculties = selectedFaculties.Count == uniqueFaculties.Count;
+    }
+
+    private void AddToSelected(PlannedLoadDto load)
+    {
+        if (load != null && !selectedPlannedLoads.Any(x => x.Id == load.Id))
+        {
+            selectedPlannedLoads.Add(load);
+            // StateHasChanged() не требуется, если используете ObservableCollection
+        }
+    }
+
+    private void RemoveFromSelected(PlannedLoadDto load)
+    {
+        if (load != null)
+        {
+            selectedPlannedLoads.Remove(load);
+            StateHasChanged();
+        }
+    }
+
+    private void ShowEditModal(PlannedLoadDto load)
+    {
+        selectedLoad = load;
+        isModalVisible = true;
+    }
+
+    private async Task HandleSave(PlannedLoadDto editedLoad)
+    {
+        // Обновите данные в selectedPlannedLoads
+        var loadToUpdate = selectedPlannedLoads.FirstOrDefault(x => x.Id == editedLoad.Id);
+        if (loadToUpdate != null)
+        {
+            loadToUpdate.Lecture = editedLoad.Lecture;
+            loadToUpdate.Lesson = editedLoad.Lesson;
+            loadToUpdate.Labwork = editedLoad.Labwork;
+            loadToUpdate.Coursework = editedLoad.Coursework;
+            loadToUpdate.CourseProject = editedLoad.CourseProject;
+            loadToUpdate.Сonsultation = editedLoad.Сonsultation;
+            loadToUpdate.Rating = editedLoad.Rating;
+            loadToUpdate.Credit = editedLoad.Credit;
+            loadToUpdate.Exam = editedLoad.Exam;
+            loadToUpdate.Practice = editedLoad.Practice;
+        }
+        isModalVisible = false; // Close the modal after saving
+    }
+
+    private void CloseModal()
+    {
+        isModalVisible = false;
+    }
+
+    private void ToggleDropdownSubj()
+    {
+        isOpenSubj = !isOpenSubj;
+        if (isOpenFaculty) isOpenFaculty = false; // Закрыть меню факультетов, если оно открыто
+        if (isOpenSemester) isOpenSemester = false;
+        if (isOpenYear) isOpenYear = false;
+    }
+
+    private void ToggleDropdownFaculty()
+    {
+        isOpenFaculty = !isOpenFaculty;
+        if (isOpenSubj) isOpenSubj = false; // Закрыть меню предметов, если оно открыто
+        if (isOpenSemester) isOpenSemester = false;
+        if (isOpenYear) isOpenYear = false;
+    }
+
+    private void ToggleDropdownYear()
+    {
+        isOpenYear = !isOpenYear;
+        if (isOpenSubj) isOpenSubj = false; // Закрыть меню предметов, если оно открыто
+        if (isOpenSemester) isOpenSemester = false;
+        if (isOpenFaculty) isOpenFaculty = false;
+    }
+
+    private void ToggleDropdownSemester()
+    {
+        isOpenSemester = !isOpenSemester;
+        if (isOpenSubj) isOpenSubj = false; // Закрыть меню предметов, если оно открыто
+        if (isOpenYear) isOpenYear = false;
+        if (isOpenFaculty) isOpenFaculty = false;
+    }
+
+    private void CloseDropdownSubj()
+    {
+        isOpenSubj = false;
+    }
+
+    private void CloseDropdownYear()
+    {
+        isOpenYear = false;
+    }
+
+    private void CloseDropdownSemester()
+    {
+        isOpenSemester = false;
+    }
+
+    private void SelectYear(string year, long yearId)
+    {
+        selectedYear = year; // Сохраняем выбранный год
+        selectedYearId = yearId; // Сохраняем ID выбранного года
+        CloseDropdownYear(); // Закрываем дропдаун
+    }
+
+    private void SelectSemester(string semester)
+    {
+        selectedSemester = semester; // Сохраняем выбранный семестр
+        selectedSemesterId = semester == autumnSemester ? 1 : 2; // Устанавливаем ID семестра
+        CloseDropdownSemester(); // Закрываем дропдаун
+    }
+
+    private void OnSubjectSelected(string subjectName, long subjectId, object isChecked)
+    {
+        if (isChecked is bool checkedValue)
+        {
+            if (checkedValue)
+            {
+                selectedSubjects.Add(subjectName); // Добавляем предмет в выбранные
+                if (!selectedSubjectIds.Contains(subjectId)) // Проверяем, что ID еще не добавлен
+                {
+                    selectedSubjectIds.Add(subjectId); // Сохраняем ID выбранного предмета
+                }
+            }
+            else
+            {
+                selectedSubjects.Remove(subjectName); // Убираем предмет из выбранных
+                selectedSubjectIds.Remove(subjectId); // Убираем ID предмета из списка выбранных
+            }
+        }
+    }
+
+    private async Task LoadPlannedLoads()
+    {
+        if (selectedYearId == 0 || selectedSemesterId == 0)
+        {
+            Console.WriteLine("Выберите данные перед загрузкой запланированной нагрузки.");
+            return;
+        }
+
+        plannedLoads.Clear(); // Очистите предыдущие нагрузки
+
+        // Проходим по каждому предмету
+        foreach (var subjectId in selectedSubjectIds)
+        {
+            // Проходим по каждому факультету
+            foreach (var faculty in selectedFaculties)
+            {
+                // Для каждого предмета и факультета загружаем нагрузку
+                var loads = await applicationService.GetPLforSelf(selectedYearId, selectedSemesterId, subjectId, faculty);
+                if (loads != null) // Пояснительная проверка на null
+                {
+                    plannedLoads.AddRange(loads); // Добавляем загруженные нагрузки
+                }
+            }
+        }
+    }
+}

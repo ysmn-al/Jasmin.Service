@@ -1,0 +1,785 @@
+﻿@page "/actualLoad"
+@using Jasmin.Common.Dto.Output
+@using Jasmin.Service.Services
+@inject NavigationManager Navigation
+@inject AuthenticationStateProviderService AuthenticationStateProviderService
+@inject IApplicationService applicationService
+@using System.Security.Claims
+@using System.Collections.Generic
+@using System.Threading.Tasks
+
+
+<PageTitle>Нагрузка</PageTitle>
+
+<h1>Нагрузка за текущий академический год</h1>
+
+@if (GroupedActualLoadsBySemester != null && GroupedActualLoadsBySemester.Any())
+{
+    foreach (var semesterGroup in GroupedActualLoadsBySemester)
+    {
+        var totalActualLoads = TotalActualLoadsBySemestr.FirstOrDefault(x => x.Semester == semesterGroup.SemesterId);
+
+        string semesterName = semesterGroup.SemesterId switch
+        {
+            1 => "Осенний семестр",
+            2 => "Весенний семестр",
+            _ => "Неизвестный семестр"
+        };
+
+        <h3>@semesterName</h3>
+
+        <RadzenDataGrid Data="@semesterGroup.Loads" TItem="ActualLoadDto" AllowPaging="true" PageSize="10" AllowSorting="true">
+            <Columns>
+                <RadzenDataGridColumn Title="Название предмета" Property="@nameof(ActualLoadDto.SubjectName)" />
+                <RadzenDataGridColumn Title="Л" Property="@nameof(ActualLoadDto.Lecture)" Width="60px">
+                    <Template>
+                        @{
+                            var value = (context as ActualLoadDto)?.Lecture;
+
+                        }
+                        @if (value == 0)
+                        {
+                            <span>-</span>
+                        }
+                        else
+                        {
+                            @value
+                        }
+                    </Template>
+                    <FooterTemplate>
+                        @if (totalActualLoads.Lecture == 0)
+                        {
+                            <span>-</span>
+                        }
+                        else
+                        {
+                            @totalActualLoads.Lecture
+                        }
+                    </FooterTemplate>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn Title="ПЗ" Property="@nameof(ActualLoadDto.Lesson)" Width="60px">
+                    <Template>
+                        @{
+                            var value = (context as ActualLoadDto)?.Lesson;
+                        }
+                        @if (value == 0)
+                        {
+                            <span>-</span>
+                        }
+                        else
+                        {
+                            @value
+                        }
+                    </Template>
+                    <FooterTemplate>
+                        @if (totalActualLoads.Lesson == 0)
+                        {
+                            <span>-</span>
+                        }
+                        else
+                        {
+                            @totalActualLoads.Lesson
+                        }
+                    </FooterTemplate>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn Title="ЛР" Property="@nameof(ActualLoadDto.Labwork)" Width="60px">
+                    <Template>
+                        @{
+                            var value = (context as ActualLoadDto)?.Labwork;
+                        }
+                        @if (value == 0)
+                        {
+                            <span>-</span>
+                        }
+                        else
+                        {
+                            @value
+                        }
+                    </Template>
+                    <FooterTemplate>
+                        @if (totalActualLoads.Labwork == 0)
+                        {
+                            <span>-</span>
+                        }
+                        else
+                        {
+                            @totalActualLoads.Labwork
+                        }
+                    </FooterTemplate>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn Title="КР" Property="@nameof(ActualLoadDto.Coursework)" Width="60px">
+                    <Template>
+                        @{
+                            var value = (context as ActualLoadDto)?.Coursework;
+                        }
+                        @if (value == 0)
+                        {
+                            <span>-</span>
+                        }
+                        else
+                        {
+                            @value
+                        }
+                    </Template>
+                    <FooterTemplate>
+                        @if (totalActualLoads.Coursework == 0)
+                        {
+                            <span>-</span>
+                        }
+                        else
+                        {
+                            @totalActualLoads.Coursework
+                        }
+                    </FooterTemplate>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn Title="КП" Property="@nameof(ActualLoadDto.CourseProject)" Width="60px">
+                    <Template>
+                        @{
+                            var value = (context as ActualLoadDto)?.CourseProject;
+                        }
+                        @if (value == 0)
+                        {
+                            <span>-</span>
+                        }
+                        else
+                        {
+                            @value
+                        }
+                    </Template>
+                    <FooterTemplate>
+                        @if (totalActualLoads.CourseProject == 0)
+                        {
+                            <span>-</span>
+                        }
+                        else
+                        {
+                            @totalActualLoads.CourseProject
+                        }
+                    </FooterTemplate>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn Title="Консультация" Property="@nameof(ActualLoadDto.Consultation)" Width="150px">
+                    <Template>
+                        @{
+                            var value = (context as ActualLoadDto)?.Consultation;
+                        }
+                        @if (value == 0)
+                        {
+                            <span>-</span>
+                        }
+                        else
+                        {
+                            @value
+                        }
+                    </Template>
+                    <FooterTemplate>
+                        @if (totalActualLoads.Consultation == 0)
+                        {
+                            <span>-</span>
+                        }
+                        else
+                        {
+                            @totalActualLoads.Consultation
+                        }
+                    </FooterTemplate>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn Title="Экзамен" Property="@nameof(ActualLoadDto.Exam)" Width="100px">
+                    <Template>
+                        @{
+                            var value = (context as ActualLoadDto)?.Exam;
+                        }
+                        @if (value == 0)
+                        {
+                            <span>-</span>
+                        }
+                        else
+                        {
+                            @value
+                        }
+                    </Template>
+                    <FooterTemplate>
+                        @if (totalActualLoads.Exam == 0)
+                        {
+                            <span>-</span>
+                        }
+                        else
+                        {
+                            @totalActualLoads.Exam
+                        }
+                    </FooterTemplate>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn Title="Рейтинг" Property="@nameof(ActualLoadDto.Rating)" Width="100px">
+                    <Template>
+                        @{
+                            var value = (context as ActualLoadDto)?.Rating;
+
+                        }
+                        @if (value == 0)
+                        {
+                            <span>-</span>
+                        }
+                        else
+                        {
+                            @value
+                        }
+                    </Template>
+                    <FooterTemplate>
+                        @if (totalActualLoads.Rating == 0)
+                        {
+                            <span>-</span>
+                        }
+                        else
+                        {
+                            @totalActualLoads.Rating
+                        }
+                    </FooterTemplate>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn Title="Зачет" Property="@nameof(ActualLoadDto.Credit)" Width="100px">
+                    <Template>
+                        @{
+                            var value = (context as ActualLoadDto)?.Credit;
+                        }
+                        @if (value == 0)
+                        {
+                            <span>-</span>
+                        }
+                        else
+                        {
+                            @value
+                        }
+                    </Template>
+                    <FooterTemplate>
+                        @if (totalActualLoads.Credit == 0)
+                        {
+                            <span>-</span>
+                        }
+                        else
+                        {
+                            @totalActualLoads.Credit
+                        }
+                    </FooterTemplate>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn Title="Практика" Property="@nameof(ActualLoadDto.Practice)" Width="120px">
+                    <Template>
+                        @{
+                            var value = (context as ActualLoadDto)?.Practice;
+                        }
+                        @if (value == 0)
+                        {
+                            <span>-</span>
+                        }
+                        else
+                        {
+                            @value
+                        }
+                    </Template>
+                    <FooterTemplate>
+                        @if (@totalActualLoads.Practice == 0)
+                        {
+                            <span>-</span>
+                        }
+                        else
+                        {
+                            @totalActualLoads.Practice
+                        }
+                    </FooterTemplate>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+        long total = totalActualLoads.Practice + totalActualLoads.Credit + totalActualLoads.Rating + totalActualLoads.Exam + totalActualLoads.Consultation + totalActualLoads.CourseProject + totalActualLoads.Coursework + totalActualLoads.Labwork + totalActualLoads.Lesson + totalActualLoads.Lecture;
+        <div>
+            <b>Всего за семестр:</b> @total
+        </div>
+        total = 0;
+    }
+}
+
+<h3>Общая</h3>
+<h1> </h1>
+
+<RadzenDataGrid Data="@ActualLoads" TItem="ActualLoadDto" AllowPaging="true" PageSize="10" AllowSorting="true">
+    <Columns>
+        <RadzenDataGridColumn Title="Название предмета" Property="@nameof(ActualLoadDto.SubjectName)" />
+        <RadzenDataGridColumn Title="Л" Property="@nameof(ActualLoadDto.Lecture)" Width="60px">
+            <Template>
+                @{
+                    var value = (context as ActualLoadDto)?.Lecture;
+                }
+                @if (value == 0)
+                {
+                    <span>-</span>
+                }
+                else
+                {
+                    @value
+                }
+            </Template>
+            <FooterTemplate>
+                @{
+                    var totalLecture = ActualLoads?.Sum(x => x.Lecture) ?? 0; // Используйте оператор ?? для замены null на 0
+                }
+                @if (totalLecture == 0)
+                {
+                    <span>-</span>
+                }
+                else
+                {
+                    @totalLecture
+                }
+            </FooterTemplate>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn Title="ПЗ" Property="@nameof(ActualLoadDto.Lesson)" Width="60px">
+            <Template>
+                @{
+                    var value = (context as ActualLoadDto)?.Lesson;
+                }
+                @if (value == 0)
+                {
+                    <span>-</span>
+                }
+                else
+                {
+                    @value
+                }
+            </Template>
+            <FooterTemplate>
+                @{
+                    var totalLesson = ActualLoads?.Sum(x => x.Lesson) ?? 0; // Используйте оператор ?? для замены null на 0
+                }
+                @if (totalLesson == 0)
+                {
+                    <span>-</span>
+                }
+                else
+                {
+                    @totalLesson
+                }
+            </FooterTemplate>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn Title="ЛР" Property="@nameof(ActualLoadDto.Labwork)" Width="60px">
+            <Template>
+                @{
+                    var value = (context as ActualLoadDto)?.Labwork;
+                }
+                @if (value == 0)
+                {
+                    <span>-</span>
+                }
+                else
+                {
+                    @value
+                }
+            </Template>
+            <FooterTemplate>
+                @{
+                    var totalLabwork = ActualLoads?.Sum(x => x.Labwork) ?? 0; // Используйте оператор ?? для замены null на 0
+                }
+                @if (totalLabwork == 0)
+                {
+                    <span>-</span>
+                }
+                else
+                {
+                    @totalLabwork
+                }
+            </FooterTemplate>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn Title="КР" Property="@nameof(ActualLoadDto.Coursework)" Width="60px">
+            <Template>
+                @{
+                    var value = (context as ActualLoadDto)?.Coursework;
+                }
+                @if (value == 0)
+                {
+                    <span>-</span>
+                }
+                else
+                {
+                    @value
+                }
+            </Template>
+            <FooterTemplate>
+                @{
+                    var totalCoursework = ActualLoads?.Sum(x => x.Coursework) ?? 0; // Используйте оператор ?? для замены null на 0
+                }
+                @if (totalCoursework == 0)
+                {
+                    <span>-</span>
+                }
+                else
+                {
+                    @totalCoursework
+                }
+            </FooterTemplate>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn Title="КП" Property="@nameof(ActualLoadDto.CourseProject)" Width="60px">
+            <Template>
+                @{
+                    var value = (context as ActualLoadDto)?.CourseProject;
+                }
+                @if (value == 0)
+                {
+                    <span>-</span>
+                }
+                else
+                {
+                    @value
+                }
+            </Template>
+            <FooterTemplate>
+                @{
+                    var totalCourseProject = ActualLoads?.Sum(x => x.CourseProject) ?? 0; // Используйте оператор ?? для замены null на 0
+                }
+                @if (totalCourseProject == 0)
+                {
+                    <span>-</span>
+                }
+                else
+                {
+                    @totalCourseProject
+                }
+            </FooterTemplate>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn Title="Консультация" Property="@nameof(ActualLoadDto.Consultation)" Width="150px">
+            <Template>
+                @{
+                    var value = (context as ActualLoadDto)?.Consultation;
+                }
+                @if (value == 0)
+                {
+                    <span>-</span>
+                }
+                else
+                {
+                    @value
+                }
+            </Template>
+            <FooterTemplate>
+                @{
+                    var totalConsultation = ActualLoads?.Sum(x => x.Consultation) ?? 0; // Используйте оператор ?? для замены null на 0
+                }
+                @if (totalConsultation == 0)
+                {
+                    <span>-</span>
+                }
+                else
+                {
+                    @totalConsultation
+                }
+            </FooterTemplate>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn Title="Экзамен" Property="@nameof(ActualLoadDto.Exam)" Width="100px">
+            <Template>
+                @{
+                    var value = (context as ActualLoadDto)?.Exam;
+                }
+                @if (value == 0)
+                {
+                    <span>-</span>
+                }
+                else
+                {
+                    @value
+                }
+            </Template>
+            <FooterTemplate>
+                @{
+                    var totalExam = ActualLoads?.Sum(x => x.Exam) ?? 0; // Используйте оператор ?? для замены null на 0
+                }
+                @if (totalExam == 0)
+                {
+                    <span>-</span>
+                }
+                else
+                {
+                    @totalExam
+                }
+            </FooterTemplate>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn Title="Рейтинг" Property="@nameof(ActualLoadDto.Rating)" Width="100px">
+            <Template>
+                @{
+                    var value = (context as ActualLoadDto)?.Rating;
+                }
+                @if (value == 0)
+                {
+                    <span>-</span>
+                }
+                else
+                {
+                    @value
+                }
+            </Template>
+            <FooterTemplate>
+                @{
+                    var totalRating = ActualLoads?.Sum(x => x.Rating) ?? 0; // Используйте оператор ?? для замены null на 0
+                }
+                @if (totalRating == 0)
+                {
+                    <span>-</span>
+                }
+                else
+                {
+                    @totalRating
+                }
+            </FooterTemplate>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn Title="Зачет" Property="@nameof(ActualLoadDto.Credit)" Width="100px">
+            <Template>
+                @{
+                    var value = (context as ActualLoadDto)?.Credit;
+                }
+                @if (value == 0)
+                {
+                    <span>-</span>
+                }
+                else
+                {
+                    @value
+                }
+            </Template>
+            <FooterTemplate>
+                @{
+                    var totalCredit = ActualLoads?.Sum(x => x.Credit) ?? 0; // Используйте оператор ?? для замены null на 0
+                }
+                @if (totalCredit == 0)
+                {
+                    <span>-</span>
+                }
+                else
+                {
+                    @totalCredit
+                }
+            </FooterTemplate>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn Title="Практика" Property="@nameof(ActualLoadDto.Practice)" Width="120px">
+            <Template>
+                @{
+                    var value = (context as ActualLoadDto)?.Practice;
+                }
+                @if (value == 0)
+                {
+                    <span>-</span>
+                }
+                else
+                {
+                    @value
+                }
+            </Template>
+            <FooterTemplate>
+                @{
+                    var totalPractice = ActualLoads?.Sum(x => x.Practice) ?? 0; // Используйте оператор ?? для замены null на 0
+                }
+                @if (totalPractice == 0)
+                {
+                    <span>-</span>
+                }
+                else
+                {
+                    @totalPractice
+                }
+            </FooterTemplate>
+        </RadzenDataGridColumn>
+    </Columns>
+    <FooterTemplate>
+        @if (totalYear > 0)
+        {
+            <div>
+                <strong>Часы за год:</strong> @totalYear
+            </div>
+        }
+
+        @if (bachelor > 0)
+        {
+            <div>
+                <strong>Бакалавры:</strong> @bachelor
+            </div>
+        }
+
+        @if (masterOne > 0)
+        {
+            <div>
+                <strong>Магистры 1 год:</strong> @masterOne
+            </div>
+        }
+
+        @if (masterTwo > 0)
+        {
+            <div>
+                <strong>Магистры 2 год:</strong> @masterTwo
+            </div>
+        }
+
+        @if (postgraduate > 0)
+        {
+            <div>
+                <strong>Аспиранты:</strong> @postgraduate
+            </div>
+        }
+
+        @if (nirs > 0)
+        {
+            <div>
+                <strong>НИРС:</strong> @nirs
+            </div>
+        }
+
+        @if (department > 0)
+        {
+            <div>
+                <strong>Руководство кафедрой:</strong> @department
+            </div>
+        }
+
+        @if (totalCombined > 0)
+        {
+            <div>
+                <strong>Итого:</strong> @totalCombined
+            </div>
+        }
+    </FooterTemplate>
+</RadzenDataGrid>
+
+
+@code {
+    private List<ActualLoadDto> ActualLoads; // Это будет итоговый список без группировки (общие итоги)
+    private List<SemesterGroup> GroupedActualLoadsBySemester; // Замените на свое имя типа для группировки данных по семестрам
+    private List<ActualLoadDto> TotalActualLoadsBySemestr;
+    private ClaimsPrincipal currentUser;
+    private long totalYear;
+    private long bachelor;
+    private long masterOne;
+    private long masterTwo;
+    private long postgraduate;
+    private long nirs;
+    private long total;
+    private long department;
+    private long totalCombined; // Новая переменная для хранения суммы
+
+    private void CalculateTotalHours()
+    {
+        totalYear = (ActualLoads?.Sum(x => x.Lecture) ?? 0) +
+                     (ActualLoads?.Sum(x => x.Lesson) ?? 0) +
+                     (ActualLoads?.Sum(x => x.Labwork) ?? 0) +
+                     (ActualLoads?.Sum(x => x.Coursework) ?? 0) +
+                     (ActualLoads?.Sum(x => x.CourseProject) ?? 0) +
+                     (ActualLoads?.Sum(x => x.Consultation) ?? 0) +
+                     (ActualLoads?.Sum(x => x.Exam) ?? 0) +
+                     (ActualLoads?.Sum(x => x.Rating) ?? 0) +
+                     (ActualLoads?.Sum(x => x.Credit) ?? 0) +
+                     (ActualLoads?.Sum(x => x.Practice) ?? 0);
+
+        totalCombined = total + totalYear;
+    }
+
+    private void OnDataChanged()
+    {
+        // Пересчитаем сумму, если данные изменятся
+        CalculateTotalHours();
+    }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProviderService.GetAuthenticationStateAsync();
+        currentUser = authState.User;
+
+        if (!currentUser.Identity.IsAuthenticated)
+        {
+            Navigation.NavigateTo("/login");
+            return; // Выход из метода, если пользователь не аутентифицирован
+        }
+        // Получаем TeacherId из Claims
+        var teacherIdString = currentUser.FindFirst("Id")?.Value; // Изменено на "Id"
+        long yearId = 1; // Получите YearId, например, из параметров URL или другого источника
+
+        if (long.TryParse(teacherIdString, out long teacherId))
+        {
+            var hoursResult = await applicationService.CalculateTotalGuideHours(teacherId, yearId);
+            if (hoursResult != null)
+            {
+                total = hoursResult.ContainsKey("TotalHours") ? hoursResult["TotalHours"] : 0;
+                bachelor = hoursResult.ContainsKey("BachelorHours") ? hoursResult["BachelorHours"] : 0;
+                masterOne = hoursResult.ContainsKey("MasterOneHours") ? hoursResult["MasterOneHours"] : 0;
+                masterTwo = hoursResult.ContainsKey("MasterTwoHours") ? hoursResult["MasterTwoHours"] : 0;
+                postgraduate = hoursResult.ContainsKey("PostgraduateHours") ? hoursResult["PostgraduateHours"] : 0;
+                nirs = hoursResult.ContainsKey("NIRSHours") ? hoursResult["NIRSHours"] : 0;
+                department = hoursResult.ContainsKey("DepartmentHours") ? hoursResult["DepartmentHours"] : 0;
+            }
+            var actualLoads = await applicationService.GetActualLoadsByTeacherIdAndYearId(teacherId, yearId);
+            GroupedActualLoadsBySemester = GroupBySemester(actualLoads); // Группируйте полученные данные по семестрам
+            ActualLoads = GetTotalActualLoads(actualLoads); // Получите общий итог
+            TotalActualLoadsBySemestr = GetTotalActualLoadsBySemestr();
+            CalculateTotalHours();
+        }
+        else
+        {
+            GroupedActualLoadsBySemester = new List<SemesterGroup>();
+            ActualLoads = new List<ActualLoadDto>();
+            TotalActualLoadsBySemestr = new List<ActualLoadDto>();
+        }
+    }
+
+    private List<SemesterGroup> GroupBySemester(List<ActualLoadDto> loads)
+    {
+        return loads.GroupBy(load => load.Semester)
+                    .Select(g => new SemesterGroup
+                        {
+                            SemesterId = g.Key,
+                            Loads = g.ToList()
+                        })
+                    .ToList();
+    }
+
+    private List<ActualLoadDto> GetTotalActualLoadsBySemestr()
+    {
+        var result = new List<ActualLoadDto>();
+        for (int semestrId = 1; semestrId <= 2; semestrId++)
+        {
+            var loads = GroupedActualLoadsBySemester.Where(x => x.SemesterId == semestrId).SelectMany(x => x.Loads).ToList();
+
+            result.Add(new ActualLoadDto()
+                {
+                    Semester = semestrId,
+                    Lecture = loads.Sum(x => x.Lecture),
+                    Lesson = loads.Sum(x => x.Lesson),
+                    Labwork = loads.Sum(x => x.Labwork),
+                    Coursework = loads.Sum(x => x.Coursework),
+                    CourseProject = loads.Sum(x => x.CourseProject),
+                    Consultation = loads.Sum(x => x.Consultation),
+                    Exam = loads.Sum(x => x.Exam),
+                    Rating = loads.Sum(x => x.Rating),
+                    Credit = loads.Sum(x => x.Credit),
+                    Practice = loads.Sum(x => x.Practice)
+
+                });
+        }
+        return result;
+    }
+
+    private List<ActualLoadDto> GetTotalActualLoads(List<ActualLoadDto> loads)
+    {
+        return loads.GroupBy(load => load.SubjectName)
+                    .Select(g => new ActualLoadDto
+                        {
+                            SubjectName = g.Key,
+                            Lecture = g.Sum(x => x.Lecture),
+                            Lesson = g.Sum(x => x.Lesson),
+                            Labwork = g.Sum(x => x.Labwork),
+                            Coursework = g.Sum(x => x.Coursework),
+                            CourseProject = g.Sum(x => x.CourseProject),
+                            Consultation = g.Sum(x => x.Consultation),
+                            Exam = g.Sum(x => x.Exam),
+                            Rating = g.Sum(x => x.Rating),
+                            Credit = g.Sum(x => x.Credit),
+                            Practice = g.Sum(x => x.Practice),
+                            Semester = 0 // Или другое значение, указывающее на общий итог
+                        })
+                    .ToList();
+    }
+
+    private class SemesterGroup
+    {
+        public int SemesterId { get; set; }
+        public List<ActualLoadDto> Loads { get; set; }
+    }
+}

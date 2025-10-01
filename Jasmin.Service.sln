@@ -1,0 +1,55 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.12.35527.113
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{AC3E8FF1-39A5-4955-99C3-B5FFFFE3C6F5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jasmin.Application", "src\Jasmin.Application\Jasmin.Application.csproj", "{49DE065C-8186-47EC-B4F4-78FFD06777A3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jasmin.Db", "src\Jasmin.Db\Jasmin.Db.csproj", "{1AD260F7-62E0-4185-99BD-BE384D230D4E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jasmin.Host", "src\Jasmin.Host\Jasmin.Host.csproj", "{D7863797-68D2-44C9-877C-0B1D5D2EFF3B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jasmin.Service", "src\Jasmin.Service\Jasmin.Service.csproj", "{4DF4B811-14F3-44C3-98FE-251F6FE73FCB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Jasmin.Common", "src\Jasmin.Common\Jasmin.Common.csproj", "{82BD33F6-E36A-4A17-977D-9C261696E0F2}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{49DE065C-8186-47EC-B4F4-78FFD06777A3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{49DE065C-8186-47EC-B4F4-78FFD06777A3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{49DE065C-8186-47EC-B4F4-78FFD06777A3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{49DE065C-8186-47EC-B4F4-78FFD06777A3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1AD260F7-62E0-4185-99BD-BE384D230D4E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1AD260F7-62E0-4185-99BD-BE384D230D4E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1AD260F7-62E0-4185-99BD-BE384D230D4E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1AD260F7-62E0-4185-99BD-BE384D230D4E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D7863797-68D2-44C9-877C-0B1D5D2EFF3B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D7863797-68D2-44C9-877C-0B1D5D2EFF3B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D7863797-68D2-44C9-877C-0B1D5D2EFF3B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D7863797-68D2-44C9-877C-0B1D5D2EFF3B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4DF4B811-14F3-44C3-98FE-251F6FE73FCB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4DF4B811-14F3-44C3-98FE-251F6FE73FCB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4DF4B811-14F3-44C3-98FE-251F6FE73FCB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4DF4B811-14F3-44C3-98FE-251F6FE73FCB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{82BD33F6-E36A-4A17-977D-9C261696E0F2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{82BD33F6-E36A-4A17-977D-9C261696E0F2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{82BD33F6-E36A-4A17-977D-9C261696E0F2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{82BD33F6-E36A-4A17-977D-9C261696E0F2}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{49DE065C-8186-47EC-B4F4-78FFD06777A3} = {AC3E8FF1-39A5-4955-99C3-B5FFFFE3C6F5}
+		{1AD260F7-62E0-4185-99BD-BE384D230D4E} = {AC3E8FF1-39A5-4955-99C3-B5FFFFE3C6F5}
+		{D7863797-68D2-44C9-877C-0B1D5D2EFF3B} = {AC3E8FF1-39A5-4955-99C3-B5FFFFE3C6F5}
+		{4DF4B811-14F3-44C3-98FE-251F6FE73FCB} = {AC3E8FF1-39A5-4955-99C3-B5FFFFE3C6F5}
+		{82BD33F6-E36A-4A17-977D-9C261696E0F2} = {AC3E8FF1-39A5-4955-99C3-B5FFFFE3C6F5}
+	EndGlobalSection
+EndGlobal

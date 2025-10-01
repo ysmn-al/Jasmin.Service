@@ -1,0 +1,130 @@
+﻿@page "/updatePwd"
+@using Jasmin.Common.Dto.Input
+@using Jasmin.Service.Services
+@using System.Security.Claims
+@inject NavigationManager Navigation
+@inject AuthenticationStateProviderService AuthenticationStateProviderService
+@inject IApplicationService applicationService
+
+<PageTitle>ChangePwd</PageTitle>
+
+<h1 class="page-title">Изменить пароль</h1>
+
+<style>
+    .page-title {
+        margin-bottom: 25px; /* Отступ снизу */
+        text-align: left; /* Выравнивание заголовка влево */
+    }
+
+    .grid-container {
+        display: grid;
+        grid-template-columns: 1fr; /* Одна колонка */
+        gap: 15px; /* Промежуток между элементами */
+        max-width: 400px; /* Уменьшенная максимальная ширина контейнера */
+        margin-left: 20px; /* Смещение контейнера влево */
+        padding: 20px; /* Внутренние отступы */
+        border: 1px solid #ccc; /* Тонкая граница */
+        border-radius: 8px; /* Закругленные углы */
+        background-color: #f9f9f9; /* Цвет фона */
+    }
+
+    input[type="password"] {
+        width: 100%; /* Поля ввода занимают всю ширину контейнера */
+        padding: 10px; /* Внутренние отступы для полей ввода */
+        box-sizing: border-box; /* Учитывать отступы и границы в ширине */
+    }
+
+    button {
+        margin-top: 20px; /* Отступ сверху для кнопки */
+    }
+</style>
+
+<EditForm Model="@passwordModel" OnValidSubmit="HandleValidSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+    <div class="grid-container">
+        <div>
+            <div><label>Текущий пароль:</label></div>
+            <div><InputText @bind-Value="@passwordModel.CurrentPassword" type="password" placeholder="Введите текущий пароль" /></div>
+        </div>
+        <div>
+            <div><label>Новый пароль:</label></div>
+            <div><InputText @bind-Value="@passwordModel.NewPassword" type="password" placeholder="Введите новый пароль" /></div>
+        </div>
+        <div>
+            <div><label>Подтверждение нового пароля:</label></div>
+            <div><InputText @bind-Value="@confirmPassword" type="password" placeholder="Повторите новый пароль" /></div>
+        </div>
+        <div><button type="submit">Сохранить</button></div>
+    </div>
+</EditForm>
+
+@if (!string.IsNullOrEmpty(loginMessage))
+{
+    <h1> </h1>
+    <div class="alert alert-info">@loginMessage</div>
+}
+
+@code {
+    private PasswordInDto passwordModel = new PasswordInDto();
+    private string loginMessage;
+    private ClaimsPrincipal currentUser;
+    private string confirmPassword;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProviderService.GetAuthenticationStateAsync();
+        currentUser = authState.User;
+
+        if (!currentUser.Identity.IsAuthenticated)
+        {
+            Navigation.NavigateTo("/login");
+        }
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        // Получите текущий пароль из claims
+        passwordModel.Login = currentUser.FindFirst(ClaimTypes.Name)?.Value;
+        var teacher = await applicationService.GetTeacherByLogin(new LoginDto { Login = passwordModel.Login, Password = passwordModel.CurrentPassword });
+        // Проверьте текущий пароль
+        if (teacher == null)
+        {
+            loginMessage = "Введен неверный текущий пароль.";
+            passwordModel.CurrentPassword = string.Empty;
+            passwordModel.NewPassword = string.Empty;
+            confirmPassword = string.Empty;
+            return;
+        }
+
+        // Проверьте, совпадает ли новый пароль с подтверждением
+        if (passwordModel.NewPassword != confirmPassword)
+        {
+            loginMessage = "Введенные пароли не совпадают.";
+            passwordModel.CurrentPassword = string.Empty;
+            passwordModel.NewPassword = string.Empty;
+            confirmPassword = string.Empty;
+            return;
+        }
+
+        // Обновите пароль в базе данных
+        var result = await applicationService.UpdatePassword(passwordModel);
+        if (result)
+        {
+            loginMessage = "Пароль обновлен.";
+            passwordModel.CurrentPassword = string.Empty;
+            passwordModel.NewPassword = string.Empty;
+            confirmPassword = string.Empty;
+            return;
+        }
+        else
+        {
+            loginMessage = "Не удалось обновить пароль.";
+            passwordModel.CurrentPassword = string.Empty;
+            passwordModel.NewPassword = string.Empty;
+            confirmPassword = string.Empty;
+            return;
+        }
+
+    }
+}

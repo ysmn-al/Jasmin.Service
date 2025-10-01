@@ -1,0 +1,37 @@
+﻿@page "/"
+@using Jasmin.Service.Services
+@inject NavigationManager Navigation
+@attribute [StreamRendering]
+@inject AuthenticationStateProviderService AuthenticationStateProviderService
+@inject IApplicationService applicationService
+@using System.Linq.Dynamic.Core
+@using System.Security.Claims
+
+<PageTitle>Information</PageTitle>
+
+<h1>Информационная справка</h1>
+
+<div style="border: 1px solid lightgray; background-color: #f9f9f9; padding: 10px; border-radius: 5px; padding-top: 20px; font-size: 18px;">
+    <p>Ознакомьтесь с краткой информационной справкой по использованию данного приложения, изложенной ниже:</p>
+    <ul>
+        <li>Для получения данных по нагрузке за текущий академический год перейдите на страницу "Текущая нагрузка". Информация по Вашей нагрузке будет представлена в трех таблицах: за осенний семестр, за весенний семестр, за год.</li>
+        <li>Для получения возможности самостоятельного подсчета предполагаемой нагрузки на следующий учебный год перейдите на страницу "Расчет нагрузки". Выберите входные данные и проведите самостоятельный набор желаемой нагрузки для обеспечения выполнения учебного плана согласно штатному расписанию.</li>
+        <li>Для смены пароля перейдите на страницу "Сменить пароль".</li>
+        <li>Выход из системы производится по нажатию кнопки "Выйти".</li>
+    </ul>
+    <p>С наилучшими пожеланиями!</p>
+</div>
+
+@code {
+    private ClaimsPrincipal currentUser;
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProviderService.GetAuthenticationStateAsync();
+        currentUser = authState.User;
+
+        if (!currentUser.Identity.IsAuthenticated)
+        {
+            Navigation.NavigateTo("/login");
+        }
+    }
+}

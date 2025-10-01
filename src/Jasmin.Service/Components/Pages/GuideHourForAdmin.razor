@@ -1,0 +1,160 @@
+﻿@page "/guideHourForAdmin"
+@using Jasmin.Common.Dto.Input
+@using Jasmin.Common.Dto.Output
+@using Jasmin.Service.Services
+@inject NavigationManager Navigation
+@inject AuthenticationStateProviderService AuthenticationStateProviderService
+@inject IApplicationService applicationService
+@using System.Security.Claims
+@using System.Collections.Generic
+@using System.Threading.Tasks
+
+<PageTitle>Часы руководства</PageTitle>
+
+<h2>Часы руководства</h2>
+
+@if (guideHours == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <RadzenDataGrid Data="@guideHours" TItem="GuideHourDto" AllowPaging="true" PageSize="10" AllowSorting="true">
+        <Columns>
+            <RadzenDataGridColumn Title="Вид" Property="@nameof(GuideHourDto.Type)" />
+            <RadzenDataGridColumn Title="Часы за семестр" Property="@nameof(GuideHourDto.SemesterHours)" />
+            <RadzenDataGridColumn Title="Часы за защиту" Property="@nameof(GuideHourDto.DefenseHours)" />
+            <RadzenDataGridColumn TItem="GuideHourDto" Property="Actions" Title="Действия" Width="150px">
+                <Template>
+                    <div>
+                        <button @onclick="() => ShowEditForm(context)">Редактировать</button>
+                    </div>
+                    <div>
+                        <button @onclick="() => DeleteGuideHour(context.Type)">Удалить</button>
+                    </div>
+                </Template>
+            </RadzenDataGridColumn>
+        </Columns>
+    </RadzenDataGrid>
+}
+
+<h3>Добавить</h3>
+<EditForm Model="@newGuideHour" OnValidSubmit="@AddGuideHour">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+    <div>
+        <div><label>Вид:</label></div>
+        <div><InputText @bind-Value="@newGuideHour.Type" /></div>
+    </div>
+    <div>
+        <div><label>Часы за семестр:</label></div>
+        <div><InputNumber @bind-Value="@newGuideHour.SemesterHours" /></div>
+    </div>
+    <div>
+        <div><label>Часы за защиту:</label></div>
+        <div><InputNumber @bind-Value="@newGuideHour.DefenseHours" /></div>
+    </div>
+
+    <button type="submit">Добавить</button>
+</EditForm>
+
+@if (isEditing)
+{
+    <h3>Редактировать</h3>
+    <EditForm Model="@updateGuideHour" OnValidSubmit="@UpdateGuideHour">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+        <div>
+            <div><label>Вид:</label></div>
+            <div><InputText @bind-Value="@updateGuideHour.Type" /></div>
+        </div>
+        <div>
+            <div><label>Часы за семестр:</label></div>
+            <div><InputNumber @bind-Value="@updateGuideHour.SemesterHours" /></div>
+        </div>
+        <div>
+            <div><label>Часы за защиту:</label></div>
+            <div><InputNumber @bind-Value="@updateGuideHour.DefenseHours" /></div>
+        </div>
+
+        <button type="submit">Сохранить изменения</button>
+    </EditForm>
+}
+
+
+@code {
+    private ClaimsPrincipal currentUser;
+    private List<GuideHourDto> guideHours;
+    private GuideHourInDto newGuideHour = new GuideHourInDto();
+    private GuideHourDto updateGuideHour = new GuideHourDto();
+    private GuideHourInDto currentGuideHour = new GuideHourInDto();
+    private bool isEditing = false;
+    private int totalItems;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProviderService.GetAuthenticationStateAsync();
+        currentUser = authState.User;
+        InitGuideHour();
+        if (!currentUser.Identity.IsAuthenticated)
+        {
+            Navigation.NavigateTo("/login");
+        }
+        else
+        {
+            guideHours = await applicationService.GetGuideHours();
+            totalItems = guideHours?.Count() ?? 0;
+
+        }
+    }
+
+    private async Task AddGuideHour()
+    {
+        bool isSuccess = await applicationService.AddGuideHour(newGuideHour);
+        if (isSuccess)
+        {
+            // Сбросить форму
+            InitGuideHour();
+            guideHours = await applicationService.GetGuideHours(); // Обновить список учителей
+        }
+    }
+
+    private async Task UpdateGuideHour()
+    {
+        bool isSuccess = await applicationService.UpdateGuideHour(updateGuideHour);
+        if (isSuccess)
+        {
+            updateGuideHour = new GuideHourDto();
+            guideHours = await applicationService.GetGuideHours();
+            isEditing = false; // выход из режима редактирования
+        }
+    }
+    
+    private void InitGuideHour()
+    {
+        newGuideHour = new GuideHourInDto()
+            {
+                Type = null,
+                SemesterHours = 0,
+                DefenseHours = 0
+            };
+    }
+
+    private async Task DeleteGuideHour(string type)
+    {
+        await applicationService.DeleteGuideHour(type);
+        guideHours = await applicationService.GetGuideHours(); // Обновить список учителей
+    }
+
+    private void ShowEditForm(GuideHourDto guideHour)
+    {
+        updateGuideHour = new GuideHourDto
+            {
+                Id = guideHour.Id,
+                Type = guideHour.Type,
+                SemesterHours = guideHour.SemesterHours,
+                DefenseHours = guideHour.DefenseHours
+            };
+        isEditing = true; // установка режима редактирования
+    }
+}

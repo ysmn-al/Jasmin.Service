@@ -1,0 +1,148 @@
+﻿@page "/edit"
+@using Jasmin.Service.Services
+@inject NavigationManager Navigation
+@attribute [StreamRendering]
+@inject AuthenticationStateProviderService AuthenticationStateProviderService
+@inject IApplicationService applicationService
+@using System.Linq.Dynamic.Core
+@using Jasmin.Common.Dto.Output
+@using Jasmin.Common.Dto.Input
+@using System.Security.Claims
+
+<PageTitle>Редактирование актуальной нагрузки</PageTitle>
+
+<h1>Редактирование актуальной нагрузки</h1>
+
+<style>
+    .grid-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr; /* три колонки одинаковой ширины */
+        gap: 20px; /* Промежуток между колонками */
+    }
+</style>
+
+
+@if (isEditing)
+{
+    <h3>Внесите изменения в запись об актуальной нагрузке:</h3>
+    <EditForm Model="@updateActualLoad" OnValidSubmit="@UpdateActualLoad">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="grid-container">
+            <div>
+                <div><label>Л:</label></div>
+                <div><InputNumber @bind-Value="updateActualLoad.Lecture" /></div>
+            </div>
+            <div>
+                <div><label>ПЗ:</label></div>
+                <div><InputNumber @bind-Value="updateActualLoad.Lesson" /></div>
+            </div>
+            <div>
+                <div><label>ЛР:</label></div>
+                <div><InputNumber @bind-Value="updateActualLoad.Labwork" /></div>
+            </div>
+            <div>
+                <div><label>КР:</label></div>
+                <div><InputNumber @bind-Value="updateActualLoad.Coursework" /></div>
+            </div>
+            <div>
+                <div><label>КП:</label></div>
+                <div><InputNumber @bind-Value="updateActualLoad.CourseProject" /></div>
+            </div>
+            <div>
+                <div><label>Консультация:</label></div>
+                <div><InputNumber @bind-Value="updateActualLoad.Consultation" /></div>
+            </div>
+            <div>
+                <div><label>Экзамен:</label></div>
+                <div><InputNumber @bind-Value="updateActualLoad.Exam" /></div>
+            </div>
+            <div>
+                <div><label>Зачет:</label></div>
+                <div><InputNumber @bind-Value="updateActualLoad.Credit" /></div>
+            </div>
+            <div>
+                <div><label>Рейтинг:</label></div>
+                <div><InputNumber @bind-Value="updateActualLoad.Rating" /></div>
+            </div>
+            <div>
+                <div><label>Практика:</label></div>
+                <div><InputNumber @bind-Value="updateActualLoad.Practice" /></div>
+            </div>
+        </div>
+
+        <button type="submit">Сохранить изменения</button>
+        <button @onclick="() => isEditing = false">Отмена</button>
+    </EditForm>
+}
+
+@if (actualLoads == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <RadzenDataGrid Data="@actualLoads" TItem="ActualLoadDto" AllowPaging="true" PageSize="10" AllowSorting="true" >
+        <Columns>
+            <RadzenDataGridColumn Title="ФИО" Property="@nameof(ActualLoadDto.TeacherName)" />
+            <RadzenDataGridColumn Title="Семестр" Property="@nameof(ActualLoadDto.Semester)" />
+            <RadzenDataGridColumn Title="Предмет" Property="@nameof(ActualLoadDto.SubjectName)" />
+            <RadzenDataGridColumn Title="Группа" Property="@nameof(ActualLoadDto.UnitNumber)" />
+            <RadzenDataGridColumn Title="Л" Property="@nameof(ActualLoadDto.Lecture)" />
+            <RadzenDataGridColumn Title="ПЗ" Property="@nameof(ActualLoadDto.Lesson)" />
+            <RadzenDataGridColumn Title="ЛР" Property="@nameof(ActualLoadDto.Labwork)" />
+            <RadzenDataGridColumn Title="КР" Property="@nameof(ActualLoadDto.Coursework)" />
+            <RadzenDataGridColumn Title="КП" Property="@nameof(ActualLoadDto.CourseProject)" />
+            <RadzenDataGridColumn Title="Консультация" Property="@nameof(ActualLoadDto.Consultation)" />
+            <RadzenDataGridColumn Title="Э" Property="@nameof(ActualLoadDto.Exam)" />
+            <RadzenDataGridColumn Title="Р" Property="@nameof(ActualLoadDto.Rating)" />
+            <RadzenDataGridColumn Title="З" Property="@nameof(ActualLoadDto.Credit)" />
+            <RadzenDataGridColumn Title="Практика" Property="@nameof(ActualLoadDto.Practice)" />
+            <RadzenDataGridColumn TItem="ActualLoadDto" Property="Actions" Title="Действия" Width="150px">
+                <Template>
+                    <div>
+                        <button @onclick="() => ShowEditForm(context)">Редактировать</button>
+                    </div>
+                </Template>
+            </RadzenDataGridColumn>
+        </Columns>
+    </RadzenDataGrid>
+}
+
+@code {
+    private ClaimsPrincipal currentUser;
+    private List<ActualLoadDto> actualLoads;
+    private ActualLoadDto updateActualLoad = new ActualLoadDto();
+    private bool isEditing = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProviderService.GetAuthenticationStateAsync();
+        currentUser = authState.User;
+        if (!currentUser.Identity.IsAuthenticated)
+        {
+            Navigation.NavigateTo("/login");
+        }
+        else
+        {
+            actualLoads = await applicationService.GetActualLoads();
+        }
+    }
+
+    private void ShowEditForm(ActualLoadDto actualLoad)
+    {
+        updateActualLoad = actualLoad; // Просто копируем данные
+        isEditing = true;
+    }
+
+    private async Task UpdateActualLoad()
+    {
+        bool isSuccess = await applicationService.UpdateActualLoad(updateActualLoad.Id, updateActualLoad);
+        if (isSuccess)
+        {
+            actualLoads = await applicationService.GetActualLoads(); // обновляем список
+            isEditing = false; // выходим из режима редактирования
+        }
+    }
+}

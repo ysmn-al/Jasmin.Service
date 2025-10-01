@@ -1,0 +1,28 @@
+﻿@inherits LayoutComponentBase
+
+<div class="loginPage">
+
+    <main>
+        <article class="content px-4">
+            @Body
+        </article>
+    </main>
+</div>
+
+<style>
+    .input-icon-wrapper {
+        position: relative;
+    }
+
+        .input-icon-wrapper i {
+            position: absolute;
+            left: 10px; /* Отступ от левого края */
+            top: 50%;
+            transform: translateY(-50%); /* Центрирование по вертикали */
+            color: #0081b8; /* Цвет иконки */
+        }
+
+    .form-control {
+        padding-left: 30px; /* Отступ для текста, чтобы не перекрывался с иконкой */
+    }
+</style>

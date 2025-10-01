@@ -1,0 +1,278 @@
+﻿@page "/user"
+@using Jasmin.Service.Services
+@inject NavigationManager Navigation
+@attribute [StreamRendering]
+@inject AuthenticationStateProviderService AuthenticationStateProviderService
+@inject IApplicationService applicationService
+@using System.Linq.Dynamic.Core
+@using System.Security.Claims
+@using Jasmin.Common.Dto.Output
+@using Jasmin.Common.Dto.Input
+@using Jasmin.Common.Enums
+
+<style>
+    .grid-container-1 {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr; /* три колонки одинаковой ширины */
+        gap: 20px; /* Промежуток между колонками */
+    }
+
+    .grid-container-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr; /* Две колонки одинаковой ширины */
+        gap: 20px; /* Промежуток между колонками */
+    }
+</style>
+
+<PageTitle>Пользователи</PageTitle>
+
+<h3>Добавить пользователя</h3>
+
+<EditForm Model="@newTeacher" OnValidSubmit="@AddTeacher">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+    <div class="grid-container-1">
+        <div>
+            <div><label>Фамилия:</label></div>
+            <div><InputText @bind-Value="@newTeacher.Surname" /></div>
+        </div>
+        <div>
+            <div><label>Логин:</label></div>
+            <div><InputText @bind-Value="@newTeacher.Login" /></div>
+        </div>
+        <div>
+            <div><label>Должность:</label></div>
+            <div>
+                <select @bind="@postValue">
+                    <option value="0">Преподаватель</option>
+                    <option value="1">Администратор</option>
+                    <option value="2">Завкаф</option>
+                </select>
+            </div>
+        </div>
+        <div>
+            <div><label>Имя:</label></div>
+            <div><InputText @bind-Value="@newTeacher.Name" /></div>
+        </div>
+        <div>
+            <div><label>Пароль:</label></div>
+            <div><InputText @bind-Value="@newTeacher.Password" type="password" /></div>
+        </div>
+        <div>
+            <div><label>Активный:</label></div>
+            <div><InputCheckbox @bind-Value="@newTeacher.IsActive" /></div>
+        </div>
+        <div>
+            <div><label>Отчество:</label></div>
+            <div><InputText @bind-Value="@newTeacher.Patronymic" /></div>
+        </div>
+        <div>
+            <div><label>Ставка:</label></div>
+            <div><InputNumber @bind-value="@newTeacher.Rate" Step="0.01" /></div>
+        </div>
+    </div>
+    <h1> </h1>
+    <button type="submit">Добавить</button>
+</EditForm>
+
+@if (isEditing)
+{
+    <h3>Редактировать учителя</h3>
+    <EditForm Model="@updateTeacher" OnValidSubmit="@UpdateTeacher">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+        <div class="grid-container-2">
+            <div>
+                <div><label>Фамилия:</label></div>
+                <div><InputText @bind-Value="@updateTeacher.Surname" /></div>
+            </div>
+            <div>
+                <div><label>Логин:</label></div>
+                <div><InputText @bind-Value="@updateTeacher.Login" /></div>
+            </div>
+            <div>
+                <div><label>Имя:</label></div>
+                <div><InputText @bind-Value="@updateTeacher.Name" /></div>
+            </div>
+            <div>
+                <div><label>Должность:</label></div>
+                <div>
+                    <select @bind="@updateTeacher.Post">
+                        @foreach (var post in Enum.GetValues(typeof(PostType)).Cast<PostType>())
+                        {
+                            <option value="@((int)post)">@post</option>
+                        }
+                    </select>
+                </div>
+            </div>
+
+            <div>
+                <div><label>Отчество:</label></div>
+                <div><InputText @bind-Value="@updateTeacher.Patronymic" /></div>
+            </div>
+            <div>
+                <div><label>Активность:</label></div>
+                <div><InputCheckbox @bind-Value="@updateTeacher.IsActive" /></div>
+            </div>
+            <div>
+                <div><label>Ставка:</label></div>
+                <div><InputNumber @bind-value="@updateTeacher.Rate" Step="0.01" /></div>
+            </div>
+        </div>
+        <button type="submit">Сохранить изменения</button>
+    </EditForm>
+}
+
+@if (teachers == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <RadzenDataGrid Data="@teachers" TItem="TeacherDto" AllowPaging="true" PageSize="10" AllowSorting="true">
+        <Columns>
+            <RadzenDataGridColumn Title="Идентификатор" Property="@nameof(TeacherDto.Id)" />
+            <RadzenDataGridColumn Title="Фамилия" Property="@nameof(TeacherDto.Surname)" />
+            <RadzenDataGridColumn Title="Имя" Property="@nameof(TeacherDto.Name)" />
+            <RadzenDataGridColumn Title="Отчество" Property="@nameof(TeacherDto.Patronymic)" />
+            <RadzenDataGridColumn Title="Логин" Property="@nameof(TeacherDto.Login)" />
+            <RadzenDataGridColumn Title="Пароль" Property="@nameof(TeacherDto.Password)" />
+            <RadzenDataGridColumn Title="Активность" Property="@nameof(TeacherDto.IsActive)">
+                <Template>
+                    <div>
+                        @GetIsActiveTypeValue(context.IsActive)
+                    </div>
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn Title="Должность" Property="@nameof(TeacherDto.Post)">
+                <Template>
+                    <div>
+                        @GetPostTypeValue(context.Post)
+                    </div>
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn Title="Ставка">
+                <Template>
+                    @((context as TeacherDto).Rate.ToString("N2"))
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="TeacherDto" Property="Actions" Title="Действия" Width="150px">
+                <Template>
+                    <div>
+                        <button @onclick="() => ShowEditForm(context)">Редактировать</button>
+                    </div>
+                    <div>
+                        <button @onclick="() => DeleteTeacher(context.Id)">Удалить</button>
+                    </div>
+                </Template>
+            </RadzenDataGridColumn>
+        </Columns>
+    </RadzenDataGrid>
+}
+
+@code {
+    private List<TeacherDto> teachers;
+    private int totalItems;
+    private TeacherInDto newTeacher = new TeacherInDto();
+    private TeacherDto updateTeacher = new TeacherDto();
+    private TeacherInDto currentTeacher = new TeacherInDto();
+    private bool isEditing = false; // флаг для редактирования
+                                    // Проверка состояния аутентификации
+    private ClaimsPrincipal currentUser;
+    private int postValue = 0;
+
+    private async Task AddTeacher()
+    {
+        newTeacher.Post = (PostType)postValue;
+        bool isSuccess = await applicationService.AddTeacher(newTeacher);
+        if (isSuccess)
+        {
+            // Сбросить форму
+            InitTeacher();
+            teachers = await applicationService.GetTeachers(); // Обновить список учителей
+        }
+    }
+
+    private async Task UpdateTeacher()
+    {
+        bool isSuccess = await applicationService.UpdateTeacher(updateTeacher);
+        if (isSuccess)
+        {
+            updateTeacher = new TeacherDto();
+            teachers = await applicationService.GetTeachers();
+            isEditing = false; // выход из режима редактирования
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProviderService.GetAuthenticationStateAsync();
+        currentUser = authState.User;
+        InitTeacher();
+        if (!currentUser.Identity.IsAuthenticated)
+        {
+            Navigation.NavigateTo("/login");
+        }
+        else
+        {
+            teachers = await applicationService.GetTeachers();
+            totalItems = teachers?.Count() ?? 0;
+
+        }
+    }
+
+    private void InitTeacher()
+    {
+        newTeacher = new TeacherInDto()
+            {
+                Login = null,
+                Password = null,
+                Post = PostType.Teacher,
+                IsActive = true,
+                Rate = 0.0f
+            };
+    }
+
+    private async Task DeleteTeacher(long id)
+    {
+        await applicationService.DeleteTeacher(id);
+        teachers = await applicationService.GetTeachers(); // Обновить список учителей
+    }
+
+    private void ShowEditForm(TeacherDto teacher)
+    {
+        updateTeacher = new TeacherDto
+            {
+                Id = teacher.Id,
+                Surname = teacher.Surname,
+                Login = teacher.Login,
+                Post = teacher.Post,
+                Name = teacher.Name,
+                IsActive = teacher.IsActive,
+                Patronymic = teacher.Patronymic,
+                Password = string.Empty, // оставляем пароль пустым
+                Rate = teacher.Rate
+            };
+        isEditing = true; // установка режима редактирования
+    }
+
+    private string GetPostTypeValue(PostType postType)
+    {
+        if (postType == PostType.Teacher)
+            return "Преподаватель";
+        if (postType == PostType.Deputy)
+            return "Заместитель";
+        if (postType == PostType.Chief)
+            return "Заведующий";
+        return string.Empty;
+    }
+
+    private string GetIsActiveTypeValue(bool isActive)
+    {
+        if (isActive == true)
+            return "Да";
+        if (isActive == false)
+            return "Нет";
+        return string.Empty;
+    }
+}

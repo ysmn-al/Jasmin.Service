@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspose.Cells" Version="25.2.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Jasmin.Common\Jasmin.Common.csproj" />
+    <ProjectReference Include="..\Jasmin.Db\Jasmin.Db.csproj" />
+  </ItemGroup>
+
+</Project>
